@@ -21,15 +21,15 @@ Todas as cores devem estar em HSL.
     --card: 210 20% 92%;
     --card-foreground: 210 15% 25%;
 
-    /* Primary Colors - Azul suave */
-    --primary: 210 80% 65%;
-    --primary-foreground: 210 25% 95%;
-    --primary-pressed: 210 75% 55%;
+    /* Primary Colors - Amarelo Dourado */
+    --primary: 50 99% 50%;
+    --primary-foreground: 345 70% 15%;
+    --primary-pressed: 45 95% 45%;
 
-    /* Secondary Colors */
-    --secondary: 210 15% 85%;
-    --secondary-foreground: 210 15% 35%;
-    --secondary-pressed: 210 10% 75%;
+    /* Secondary Colors - Vermelho Escuro */
+    --secondary: 345 70% 28%;
+    --secondary-foreground: 50 99% 95%;
+    --secondary-pressed: 345 75% 22%;
 
     /* Success Color */
     --success: 145 65% 55%;
@@ -49,13 +49,13 @@ Todas as cores devem estar em HSL.
     --muted-foreground: 210 10% 45%;
 
     /* Accent Colors */
-    --accent: 210 25% 90%;
-    --accent-foreground: 210 15% 30%;
+    --accent: 55 95% 88%;
+    --accent-foreground: 345 70% 25%;
 
     /* Border and Input */
     --border: 210 15% 85%;
     --input: 210 20% 92%;
-    --ring: 210 80% 65%;
+    --ring: 50 99% 50%;
 
     /* Neomorphic Shadows */
     --shadow-light: 0 0 20px rgba(255, 255, 255, 0.7);
@@ -66,7 +66,7 @@ Todas as cores devem estar em HSL.
     /* Gradients */
     --gradient-surface: linear-gradient(145deg, hsl(210 25% 96%), hsl(210 20% 88%));
     --gradient-pressed: linear-gradient(145deg, hsl(210 15% 85%), hsl(210 25% 95%));
-    --gradient-primary: linear-gradient(145deg, hsl(210 85% 70%), hsl(210 75% 60%));
+    --gradient-primary: linear-gradient(145deg, hsl(50 99% 55%), hsl(45 95% 45%));
 
     /* Border Radius */
     --radius: 1rem;
@@ -100,13 +100,13 @@ Todas as cores devem estar em HSL.
     --card: 210 20% 18%;
     --card-foreground: 210 25% 85%;
 
-    --primary: 210 75% 55%;
-    --primary-foreground: 210 15% 15%;
-    --primary-pressed: 210 70% 45%;
+    --primary: 50 95% 60%;
+    --primary-foreground: 345 70% 15%;
+    --primary-pressed: 45 90% 50%;
 
-    --secondary: 210 15% 25%;
-    --secondary-foreground: 210 25% 75%;
-    --secondary-pressed: 210 20% 15%;
+    --secondary: 345 65% 35%;
+    --secondary-foreground: 50 99% 95%;
+    --secondary-pressed: 345 70% 25%;
 
     --success: 145 55% 45%;
     --success-foreground: 210 15% 15%;
@@ -121,12 +121,12 @@ Todas as cores devem estar em HSL.
     --muted: 210 15% 25%;
     --muted-foreground: 210 10% 65%;
 
-    --accent: 210 20% 22%;
-    --accent-foreground: 210 25% 80%;
+    --accent: 55 90% 35%;
+    --accent-foreground: 50 99% 95%;
 
     --border: 210 15% 25%;
     --input: 210 20% 18%;
-    --ring: 210 75% 55%;
+    --ring: 50 95% 60%;
 
     --shadow-light: 0 0 20px rgba(255, 255, 255, 0.05);
     --shadow-dark: 0 0 20px rgba(0, 0, 0, 0.3);
@@ -135,7 +135,7 @@ Todas as cores devem estar em HSL.
 
     --gradient-surface: linear-gradient(145deg, hsl(210 20% 20%), hsl(210 15% 16%));
     --gradient-pressed: linear-gradient(145deg, hsl(210 15% 12%), hsl(210 20% 20%));
-    --gradient-primary: linear-gradient(145deg, hsl(210 80% 60%), hsl(210 70% 50%));
+    --gradient-primary: linear-gradient(145deg, hsl(50 95% 65%), hsl(45 90% 55%));
   }
 }
 
