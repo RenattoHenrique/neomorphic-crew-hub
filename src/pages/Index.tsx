@@ -18,48 +18,49 @@ import {
   User
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-// Dados mock para demonstração (será substituído pelo Supabase)
-const mockEmployees = [
-  {
-    id: "1",
-    photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-    name: "João Silva",
-    registration: "EMP001",
-    cpf: "123.456.789-00",
-    specialty: "Desenvolvedor Full-Stack",
-    phone: "(11) 99999-1234",
-    unit: "Tecnologia"
-  },
-  {
-    id: "2", 
-    photo: "https://images.unsplash.com/photo-1494790108755-2616b612b5bc?w=100&h=100&fit=crop&crop=face",
-    name: "Maria Santos",
-    registration: "EMP002",
-    cpf: "987.654.321-00",
-    specialty: "Designer UX/UI",
-    phone: "(11) 88888-5678",
-    unit: "Design"
-  },
-  {
-    id: "3",
-    photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-    name: "Carlos Oliveira",
-    registration: "EMP003", 
-    cpf: "456.789.123-00",
-    specialty: "Analista de Sistemas",
-    phone: "(11) 77777-9012",
-    unit: "Tecnologia"
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
+import { EmployeeDetailsModal } from "@/components/employee/EmployeeDetailsModal";
+import { EmployeeFormModal } from "@/components/employee/EmployeeFormModal";
+import { Employee } from "@/types/employee";
 
 const Index = () => {
-  const [employees, setEmployees] = useState(mockEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const { toast } = useToast();
+
+  // Fetch employees from Supabase
+  const fetchEmployees = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setEmployees(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar funcionários",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load employees on component mount
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
 
   // Filtrar funcionários baseado no termo de busca
   const filteredEmployees = employees.filter(employee => 
@@ -92,24 +93,49 @@ const Index = () => {
   };
 
   const handleAddEmployee = () => {
-    toast({
-      title: "Adicionar Funcionário",
-      description: "Conecte ao Supabase para habilitar esta funcionalidade",
-    });
+    setEditingEmployee(null);
+    setIsFormModalOpen(true);
   };
 
   const handleEditEmployee = (id: string) => {
-    toast({
-      title: "Editar Funcionário",
-      description: "Conecte ao Supabase para habilitar esta funcionalidade",
-    });
+    const employee = employees.find(emp => emp.id === id);
+    if (employee) {
+      setEditingEmployee(employee);
+      setIsFormModalOpen(true);
+    }
   };
 
-  const handleDeleteEmployee = (id: string) => {
-    toast({
-      title: "Excluir Funcionário", 
-      description: "Conecte ao Supabase para habilitar esta funcionalidade",
-    });
+  const handleDeleteEmployee = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('employees')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Funcionário excluído",
+        description: "O funcionário foi removido com sucesso.",
+      });
+
+      fetchEmployees();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir funcionário",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEmployeePhotoClick = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleFormSuccess = () => {
+    fetchEmployees();
   };
 
   const handleExport = (format: string) => {
@@ -279,13 +305,18 @@ const Index = () => {
               <tbody>
                 {sortedEmployees.map((employee) => (
                   <tr key={employee.id} className="border-b border-border hover:bg-surface/50 transition-colors">
-                    <td className="p-4">
-                      <img
-                        src={employee.photo}
-                        alt={employee.name}
-                        className="w-12 h-12 rounded-full object-cover neo-card p-1"
-                      />
-                    </td>
+                     <td className="p-4">
+                       <button
+                         onClick={() => handleEmployeePhotoClick(employee)}
+                         className="transition-transform hover:scale-105"
+                       >
+                         <img
+                           src={employee.photo || '/placeholder.svg'}
+                           alt={employee.name}
+                           className="w-12 h-12 rounded-full object-cover neo-card p-1 cursor-pointer"
+                         />
+                       </button>
+                     </td>
                     <td className="p-4 font-medium text-foreground">{employee.name}</td>
                     <td className="p-4 text-muted-foreground">{employee.registration}</td>
                     <td className="p-4 text-muted-foreground">{employee.cpf}</td>
@@ -331,11 +362,16 @@ const Index = () => {
             {sortedEmployees.map((employee) => (
               <Card key={employee.id} className="neo-card p-4">
                 <div className="flex items-start gap-4">
-                  <img
-                    src={employee.photo}
-                    alt={employee.name}
-                    className="w-16 h-16 rounded-full object-cover neo-card p-1"
-                  />
+                  <button
+                    onClick={() => handleEmployeePhotoClick(employee)}
+                    className="transition-transform hover:scale-105"
+                  >
+                    <img
+                      src={employee.photo || '/placeholder.svg'}
+                      alt={employee.name}
+                      className="w-16 h-16 rounded-full object-cover neo-card p-1 cursor-pointer"
+                    />
+                  </button>
                   <div className="flex-1 space-y-2">
                     <div className="flex items-start justify-between">
                       <h3 className="font-semibold text-lg text-foreground">{employee.name}</h3>
@@ -416,6 +452,20 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <EmployeeDetailsModal
+        employee={selectedEmployee}
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+      />
+
+      <EmployeeFormModal
+        employee={editingEmployee}
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        onSuccess={handleFormSuccess}
+      />
     </div>
   );
 };
