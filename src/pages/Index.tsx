@@ -337,7 +337,7 @@ const Index = () => {
           <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-primary rounded-full"></div>
-              <span>Sistema Neomórfico de Gestão</span>
+              <span>Designer Neomórfico de Gestão</span>
             </div>
             <span>•</span>
             <span>Desenvolvido com React + Tailwind + Supabase</span>
