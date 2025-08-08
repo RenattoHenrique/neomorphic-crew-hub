@@ -11,7 +11,7 @@ export type Employee = {
   network_login?: string | null;
   date_of_birth?: string | null;
   admission_date?: string | null;
-  gender?: string | null;
+  gender?: "M" | "F" | null;
   coordination?: string | null;
   contract?: string | null;
   work_schedule?: string | null;

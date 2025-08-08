@@ -45,7 +45,7 @@ const Index = () => {
         .order('name');
 
       if (error) throw error;
-      setEmployees(data || []);
+      setEmployees((data || []) as Employee[]);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar funcionários",

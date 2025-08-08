@@ -32,25 +32,6 @@ const employeeSchema = z.object({
 
 type EmployeeFormData = z.infer<typeof employeeSchema>;
 
-type Employee = {
-  id?: string;
-  photo?: string;
-  name: string;
-  registration: string;
-  cpf: string;
-  specialty: string;
-  phone: string;
-  unit: string;
-  email?: string;
-  network_login?: string;
-  date_of_birth?: string;
-  admission_date?: string;
-  gender?: "M" | "F";
-  coordination?: string;
-  contract?: string;
-  work_schedule?: string;
-};
-
 interface EmployeeFormModalProps {
   employee?: Employee | null;
   isOpen: boolean;
