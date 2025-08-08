@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { 
   Search, 
   Plus, 
+  Upload,
   Filter, 
   Download, 
   Edit, 
@@ -22,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { EmployeeDetailsModal } from "@/components/employee/EmployeeDetailsModal";
 import { EmployeeFormModal } from "@/components/employee/EmployeeFormModal";
+import { EmployeeImportModal } from "@/components/employee/EmployeeImportModal";
 import { Employee } from "@/types/employee";
 
 const Index = () => {
@@ -33,6 +35,7 @@ const Index = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const { toast } = useToast();
 
@@ -96,6 +99,10 @@ const Index = () => {
   const handleAddEmployee = () => {
     setEditingEmployee(null);
     setIsFormModalOpen(true);
+  };
+
+  const handleImportEmployees = () => {
+    setIsImportModalOpen(true);
   };
 
   const handleEditEmployee = (id: string) => {
@@ -197,6 +204,15 @@ const Index = () => {
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Adicionar
+              </Button>
+              
+              <Button 
+                onClick={handleImportEmployees}
+                variant="outline"
+                className="neo-button bg-secondary/10 text-secondary border-secondary/20"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Importar
               </Button>
               
               <Button 
@@ -466,6 +482,12 @@ const Index = () => {
         employee={editingEmployee}
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
+        onSuccess={handleFormSuccess}
+      />
+
+      <EmployeeImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
         onSuccess={handleFormSuccess}
       />
     </div>
