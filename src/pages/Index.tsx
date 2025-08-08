@@ -131,9 +131,7 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-foreground">Gestão de Funcionários Servitium</h1>
-                <p className="text-muted-foreground">
-                  Sistema completo de gerenciamento com design neomórfico
-                </p>
+                <p className="text-muted-foreground">Sistema completo de gerenciamento funcionários Servitium da CPR e CMA SUL</p>
               </div>
             </div>
             
