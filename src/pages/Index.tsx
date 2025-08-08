@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { 
   Search, 
   Plus, 
@@ -165,10 +166,11 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Badge variant="outline" className="bg-success/10 text-success border-success/20">
                 {employees.length} funcionários
               </Badge>
+              <ThemeToggle />
             </div>
           </div>
         </div>
