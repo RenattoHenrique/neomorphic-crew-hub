@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +9,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Employee } from "@/types/employee";
+
 const employeeSchema = z.object({
   photo: z.string().optional(),
   name: z.string().min(1, "Nome é obrigatório"),
@@ -26,34 +27,35 @@ const employeeSchema = z.object({
   gender: z.enum(["M", "F"]).optional(),
   coordination: z.string().optional(),
   contract: z.string().optional(),
-  work_schedule: z.string().optional()
+  work_schedule: z.string().optional(),
 });
+
 type EmployeeFormData = z.infer<typeof employeeSchema>;
+
 interface EmployeeFormModalProps {
   employee?: Employee | null;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
+
 export const EmployeeFormModal = ({
   employee,
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
 }: EmployeeFormModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(employee?.photo || null);
+  const { toast } = useToast();
+
   const {
     register,
     handleSubmit,
-    formState: {
-      errors
-    },
+    formState: { errors },
     reset,
     setValue,
-    watch
   } = useForm<EmployeeFormData>({
     resolver: zodResolver(employeeSchema),
     defaultValues: employee || {
@@ -71,69 +73,115 @@ export const EmployeeFormModal = ({
       gender: undefined,
       coordination: "",
       contract: "",
-      work_schedule: ""
-    }
+      work_schedule: "",
+    },
   });
+
+  // Atualiza o preview quando o employee muda
+  useEffect(() => {
+    setPreview(employee?.photo || null);
+    reset(employee || {
+      photo: "",
+      name: "",
+      registration: "",
+      cpf: "",
+      specialty: "",
+      phone: "",
+      unit: "",
+      email: "",
+      network_login: "",
+      date_of_birth: "",
+      admission_date: "",
+      gender: undefined,
+      coordination: "",
+      contract: "",
+      work_schedule: "",
+    });
+  }, [employee, reset]);
+
+  // Manipula seleção de arquivo
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      if (["image/png", "image/jpeg"].includes(selectedFile.type)) {
+        setFile(selectedFile);
+        setPreview(URL.createObjectURL(selectedFile));
+        setValue("photo", URL.createObjectURL(selectedFile)); // Para compatibilidade com o schema
+      } else {
+        toast({
+          title: "Formato inválido",
+          description: "Por favor, selecione uma imagem em formato PNG ou JPG.",
+          variant: "destructive",
+        });
+        e.target.value = "";
+      }
+    }
+  };
+
   const onSubmit = async (data: EmployeeFormData) => {
     setIsLoading(true);
     try {
-      // Prepare data for database - ensure required fields are present
+      let photoUrl = data.photo || null;
+      if (file) {
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${employee?.id || Math.random().toString(36).slice(2)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from("employee-photos")
+          .upload(`photos/${fileName}`, file, { upsert: true });
+        if (uploadError) throw uploadError;
+        photoUrl = supabase.storage.from("employee-photos").getPublicUrl(`photos/${fileName}`).data.publicUrl;
+      }
+
       const employeeData = {
-        photo: data.photo || null,
-        name: data.name,
-        registration: data.registration,
-        cpf: data.cpf,
-        specialty: data.specialty,
-        phone: data.phone,
-        unit: data.unit,
-        email: data.email || null,
-        network_login: data.network_login || null,
-        date_of_birth: data.date_of_birth || null,
-        admission_date: data.admission_date || null,
-        gender: data.gender || null,
-        coordination: data.coordination || null,
-        contract: data.contract || null,
-        work_schedule: data.work_schedule || null
+        ...data,
+        photo: photoUrl,
       };
+
       if (employee?.id) {
-        // Update existing employee
-        const {
-          error
-        } = await supabase.from('employees').update(employeeData).eq('id', employee.id);
+        // Atualizar funcionário existente
+        const { error } = await supabase
+          .from("employees")
+          .update(employeeData)
+          .eq("id", employee.id);
         if (error) throw error;
         toast({
           title: "Funcionário atualizado",
-          description: "Os dados do funcionário foram atualizados com sucesso."
+          description: "Os dados do funcionário foram atualizados com sucesso.",
         });
       } else {
-        // Create new employee
-        const {
-          error
-        } = await supabase.from('employees').insert(employeeData);
+        // Criar novo funcionário
+        const { error } = await supabase.from("employees").insert(employeeData);
         if (error) throw error;
         toast({
           title: "Funcionário criado",
-          description: "Novo funcionário foi criado com sucesso."
+          description: "Novo funcionário foi criado com sucesso.",
         });
       }
       onSuccess();
       onClose();
       reset();
+      setFile(null);
+      setPreview(null);
     } catch (error: any) {
       toast({
         title: "Erro",
         description: error.message || "Ocorreu um erro ao salvar o funcionário.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
   const handleClose = () => {
     reset();
+    setFile(null);
+    setPreview(null);
     onClose();
   };
-  return <Dialog open={isOpen} onOpenChange={handleClose}>
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="neo-card max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-foreground">
@@ -149,8 +197,21 @@ export const EmployeeFormModal = ({
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="photo">URL da Foto</Label>
-                <Input id="photo" {...register("photo")} placeholder="https://exemplo.com/foto.jpg" className="neo-input" />
+                <Label htmlFor="photo">Foto (opcional, PNG ou JPG)</Label>
+                <Input
+                  id="photo"
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  onChange={handleFileChange}
+                  className="neo-input"
+                />
+                <div className="mt-2 flex justify-center">
+                  <img
+                    src={preview || "/assets/default-avatar.png"}
+                    alt={preview ? "Foto do funcionário" : "Sem foto"}
+                    className="h-24 w-24 rounded-full object-cover border-2 border-gray-200 shadow-neumorphic"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="name">Nome Completo *</Label>
@@ -160,11 +221,18 @@ export const EmployeeFormModal = ({
               <div className="space-y-2">
                 <Label htmlFor="registration">Matrícula *</Label>
                 <Input id="registration" {...register("registration")} className="neo-input" />
-                {errors.registration && <p className="text-sm text-destructive">{errors.registration.message}</p>}
+                {errors.registration && (
+                  <p className="text-sm text-destructive">{errors.registration.message}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cpf">CPF *</Label>
-                <Input id="cpf" {...register("cpf")} placeholder="000.000.000-00" className="neo-input" />
+                <Input
+                  id="cpf"
+                  {...register("cpf")}
+                  placeholder="000.000.000-00"
+                  className="neo-input"
+                />
                 {errors.cpf && <p className="text-sm text-destructive">{errors.cpf.message}</p>}
               </div>
             </div>
@@ -178,12 +246,23 @@ export const EmployeeFormModal = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="phone">Telefone *</Label>
-                <Input id="phone" {...register("phone")} placeholder="(11) 99999-9999" className="neo-input" />
+                <Input
+                  id="phone"
+                  {...register("phone")}
+                  placeholder="(11) 99999-9999"
+                  className="neo-input"
+                />
                 {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
-                <Input id="email" type="email" {...register("email")} placeholder="usuario@empresa.com" className="neo-input" />
+                <Input
+                  id="email"
+                  type="email"
+                  {...register("email")}
+                  placeholder="usuario@empresa.com"
+                  className="neo-input"
+                />
                 {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
               </div>
             </div>
@@ -209,11 +288,21 @@ export const EmployeeFormModal = ({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="date_of_birth">Data de Nascimento</Label>
-                <Input id="date_of_birth" type="date" {...register("date_of_birth")} className="neo-input" />
+                <Input
+                  id="date_of_birth"
+                  type="date"
+                  {...register("date_of_birth")}
+                  className="neo-input"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="network_login">Login de Rede</Label>
-                <Input id="network_login" {...register("network_login")} placeholder="usuario.rede" className="neo-input" />
+                <Input
+                  id="network_login"
+                  {...register("network_login")}
+                  placeholder="usuario.rede"
+                  className="neo-input"
+                />
               </div>
             </div>
           </div>
@@ -227,7 +316,9 @@ export const EmployeeFormModal = ({
               <div className="space-y-2">
                 <Label htmlFor="specialty">Especialidade *</Label>
                 <Input id="specialty" {...register("specialty")} className="neo-input" />
-                {errors.specialty && <p className="text-sm text-destructive">{errors.specialty.message}</p>}
+                {errors.specialty && (
+                  <p className="text-sm text-destructive">{errors.specialty.message}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="unit">Unidade *</Label>
@@ -240,7 +331,12 @@ export const EmployeeFormModal = ({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="admission_date">Data de Admissão</Label>
-                <Input id="admission_date" type="date" {...register("admission_date")} className="neo-input" />
+                <Input
+                  id="admission_date"
+                  type="date"
+                  {...register("admission_date")}
+                  className="neo-input"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contract">Contrato</Label>
@@ -266,20 +362,37 @@ export const EmployeeFormModal = ({
             </h3>
             <div className="space-y-2">
               <Label htmlFor="work_schedule">Horário de Trabalho</Label>
-              <Textarea id="work_schedule" {...register("work_schedule")} placeholder="Ex: Segunda a Sexta - 8h às 18h" className="neo-input" rows={3} />
+              <Textarea
+                id="work_schedule"
+                {...register("work_schedule")}
+                placeholder="Ex: Segunda a Sexta - 8h às 18h"
+                className="neo-input"
+                rows={3}
+              />
             </div>
           </div>
 
           {/* Buttons */}
           <div className="flex justify-end gap-3 pt-6 border-t border-border">
-            <Button type="button" variant="outline" onClick={handleClose} className="neo-button" disabled={isLoading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              className="neo-button"
+              disabled={isLoading}
+            >
               Cancelar
             </Button>
-            <Button type="submit" className="neo-button bg-gradient-primary text-primary-foreground" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="neo-button bg-gradient-primary text-primary-foreground"
+              disabled={isLoading}
+            >
               {isLoading ? "Salvando..." : employee ? "Atualizar" : "Criar"}
             </Button>
           </div>
         </form>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };
